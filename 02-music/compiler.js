@@ -1,6 +1,4 @@
-// #12
-// Add rest support
-// { tag: 'rest', dur: 100 }
+// mus2note compiler, with MIDI conversion
 
 var strip_rest = function(nodes) {
     if (nodes.length == 0)
@@ -13,68 +11,69 @@ var strip_rest = function(nodes) {
 }
 
 var pitch2midi = function(muspitch) {
-    // Convert musical pitch to MIDI integer
-    // 12 + 12 * octave + letterPitch. The letterPitch is 0 for C, 2 for D, up to 11 for B
-    var LETTER_PITCHES = {'c': 0,
-                          'd': 2,
-                          'e': 4,
-                          'f': 5,
-                          'g': 7,
-                          'a': 9,
-                          'b': 11};
+    // Convert musical pitch to MIDI intege
+    // http://www.phys.unsw.edu.au/jw/notes.html
+    var LETTER_PITCHES = {c: 12,
+                          d: 14,
+                          e: 16,
+                          f: 17,
+                          g: 19,
+                          a: 21,
+                          b: 23};
 
     var letter = muspitch[0];
     var letterPitch = LETTER_PITCHES[letter.toLowerCase()];
     var octave = parseInt(muspitch.slice(1));
-    return 12 + 12 * octave + letterPitch;
+    return 12 * octave + letterPitch;
 }
 
 var mus2note = function(start, musexpr) {
-    if (musexpr.tag == 'par' || musexpr.tag == 'seq')
+    switch (musexpr.tag)
     {
-        var left, right;
-        var last;
+        case 'par':
+        case 'seq':
+            var left, right;
+            var last;
 
-        left = mus2note(start,
-                        musexpr.left);
-        last = left[left.length - 1];
+            left = mus2note(start,
+                            musexpr.left);
+            last = left[left.length - 1];
 
-        if (musexpr.tag == 'seq')
-            start = last.start + last.dur;
+            if (musexpr.tag == 'seq')
+                start = last.start + last.dur;
 
-        right = mus2note(start,
-                         musexpr.right);
-        return strip_rest(left.concat(right));
+            right = mus2note(start,
+                             musexpr.right);
+            return strip_rest(left.concat(right));
+
+        case 'repeat':
+            var i;
+            var nodes = []
+            for (i = 0; i < musexpr.count; i++)
+            {
+                var next = mus2note(start, musexpr.section);
+                var last = next[next.length - 1];
+                nodes = nodes.concat(next);
+                start = last.start + last.dur;
+            }
+
+            return nodes;
+
+        default:
+            // Either a 'note' or a 'rest'
+            var pitch;
+
+            if (musexpr.tag == 'note')
+                pitch = pitch2midi(musexpr.pitch);
+            else
+                // Rests have no pitch
+                pitch = 0;
+
+            return [ { tag: 'note',
+                       pitch: pitch,
+                       start: start,
+                       dur: musexpr.dur } ];
     }
-
-    if (musexpr.tag == 'repeat')
-    {
-        var i;
-        var nodes = []
-        for (i = 0; i < musexpr.count; i++)
-        {
-            var next = mus2note(start, musexpr.section);
-            var last = next[next.length - 1];
-            nodes = nodes.concat(next);
-            start = last.start + last.dur;
-        }
-
-        return nodes;
-    }
-
-    // Either a 'note' or a 'rest'
-    var pitch;
-
-    if (musexpr.tag == 'note')
-        pitch = pitch2midi(musexpr.pitch);
-    else
-        // Rests have no pitch
-        pitch = 0;
-
-    return [ { tag: 'note',
-               pitch: pitch,
-               start: start,
-               dur: musexpr.dur } ];
 };
 
 var compile = function (musexpr) {
