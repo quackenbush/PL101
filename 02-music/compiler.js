@@ -12,6 +12,21 @@ var strip_rest = function(nodes) {
     return result.concat(strip_rest(nodes.slice(1)));
 }
 
+var pitch2midi = function(muspitch) {
+    // 12 + 12 * octave + letterPitch. The letterPitch is 0 for C, 2 for D, up to 11 for B
+    var LETTER_PITCHES = {'c': 0,
+                          'd': 2,
+                          'e': 4,
+                          'f': 5,
+                          'g': 7,
+                          'a': 9,
+                          'b': 11};
+    var letter = muspitch[0];
+    var letterPitch = LETTER_PITCHES[letter.toLowerCase()];
+    var octave = parseInt(muspitch.slice(1));
+    return 12 + 12 * octave + letterPitch;
+}
+
 var mus2note = function(start, musexpr) {
     if (musexpr.tag == 'par' || musexpr.tag == 'seq')
     {
@@ -30,15 +45,18 @@ var mus2note = function(start, musexpr) {
         return strip_rest(left.concat(right));
     }
 
-    var out = { tag: 'note',
-                pitch: musexpr.pitch,
-                start: start,
-                dur: musexpr.dur};
+    var pitch;
 
-    if (musexpr.tag == 'rest')
-        out.pitch = 0;
+    if (musexpr.tag == 'note')
+        pitch = pitch2midi(musexpr.pitch);
+    else
+        // Rests have no pitch
+        pitch = 0;
 
-    return [out];
+    return [ { tag: 'note',
+               pitch: pitch,
+               start: start,
+               dur: musexpr.dur } ];
 };
 
 var compile = function (musexpr) {
@@ -48,6 +66,8 @@ var compile = function (musexpr) {
 var test = function() {
     var assert = require('assert');
 
+    assert.equal(pitch2midi('A0'), 21);
+    assert.equal(pitch2midi('C4'), 60);
     var test0 =
         { tag: 'par',
           left: { tag: 'note', pitch: 'c4', dur: 250 },
@@ -62,9 +82,9 @@ var test = function() {
         };
 
     var exp0 =
-        [ { tag: 'note', pitch: 'c4', start: 0, dur: 250 },
-          { tag: 'note', pitch: 'e4', start: 0, dur: 250 },
-          { tag: 'note', pitch: 'g4', start: 100, dur: 250 } ];
+        [ { tag: 'note', pitch: pitch2midi('c4'), start: 0, dur: 250 },
+          { tag: 'note', pitch: pitch2midi('e4'), start: 0, dur: 250 },
+          { tag: 'note', pitch: pitch2midi('g4'), start: 100, dur: 250 } ];
 
     var actual0 = compile(test0);
     //console.log(actual0);
