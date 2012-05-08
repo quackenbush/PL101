@@ -10,14 +10,12 @@ comment =
     ";;" [^\n]*
 
 whitespace =
-    " "
-  / "\n"
-  / "\t"
+    [ \n\t]
   / comment
 
 atom =
     chars:validchar+
-        { return chars.join(""); }
+    { return chars.join(""); }
 
 expression =
     result: atom whitespace*

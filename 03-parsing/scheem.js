@@ -31,6 +31,9 @@ var scheem_selftest = function() {
         ["'blah", ["quote", "blah"] ],
         ["'(hello world 123)", ["quote", "hello", "world", "123"] ],
         ["'x", scheem_parse("(quote x)") ],
+
+        // Functions
+        ["(def x\n\t(lambda (x) (+ 1 x)))", ["def", "x", ["lambda", ["x"], ["+", "1", "x"]]] ],
     ];
 
     var i;
