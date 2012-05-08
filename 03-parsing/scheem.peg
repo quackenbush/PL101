@@ -1,0 +1,28 @@
+// Scheem Grammar
+
+start =
+    expression
+
+validchar =
+    [0-9a-zA-Z_?!+\-=@#$%^&*/.]
+
+comment =
+    ";;" [^\n]*
+
+whitespace =
+    " "
+  / "\n"
+  / "\t"
+  / comment
+
+atom =
+    chars:validchar+
+        { return chars.join(""); }
+
+expression =
+    result: atom whitespace*
+    { return result; }
+  / '(' result: expression+ ')' whitespace*
+    { return result; }
+  / "'" quote: expression whitespace*
+    { return ["quote"].concat(quote); }
