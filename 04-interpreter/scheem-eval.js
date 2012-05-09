@@ -4,16 +4,21 @@ var SCHEEM_F = '#f';
 var scheem_check_size = function(expr, min_size, max_size) {
     if ((expr.length < min_size) ||
         (expr.length > max_size))
-        throw new Error("Invalid number of args for " + expr[0]);
+        throw new Error("Invalid number of args (" + expr.length + ") for " + expr[0] + ": " + expr.slice(1));
 };
 
 var scheem_set = function(expr, env, do_set) {
     var key;
 
     scheem_check_size(expr, 3, 3);
-    key = expr[1];
+    // FIXME: when do we need to 'eval' the key?
+    if (true)
+        key = expr[1] ;
+    else
+        key = scheem_eval(expr[1]);
+
     if (typeof key !== 'string')
-        throw new Error("Variable must be a string");
+        throw new Error("Variable must be a string (" + key + ")");
 
     if (do_set)
     {

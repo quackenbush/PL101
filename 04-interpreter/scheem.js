@@ -30,17 +30,33 @@ console.log(scheem_eval.eval(['+', 101, 42], {}));
 
 var scheem_test = function() {
     var TESTS = [
+        // Arithmetic
         ["(+ 4 2)",
          6],
 
         ["(- (* 3 7) 6)",
          (7 * 3) - 6],
 
+        // Conditionals
         ["(if (> 3 4) 9 5)",
          5],
 
         ["(if (> 4 3) 9 5)",
          9],
+
+        // Variables
+        ["'foo",
+         "foo"],
+
+        ["(define foo 3)",
+         0],
+
+        // begin
+        ["(begin (define foo 3) (set! foo (* foo 2)) (+ foo 4))",
+         (3*2)+4],
+
+        ["(begin (define bar '(+ 3 4)) bar)",
+         ['+', 3, 4]],
 
         ];
 
@@ -54,9 +70,12 @@ var scheem_test = function() {
         var actual;
 
         console.log("Test " + (i + 1) + " / " + num_tests + ": " + input);
-        actual = scheem_eval.eval(scheem_parse(input));
+        actual = scheem_eval.eval(scheem_parse(input), {});
         assert.deepEqual(actual, expected);
     }
+
+    console.log("----------------------------------------");
+    console.log("" + num_tests + " scheem tests PASSed");
 };
 
 scheem_test();

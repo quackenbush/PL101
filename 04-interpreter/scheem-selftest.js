@@ -23,7 +23,7 @@ exports.scheem_selftest = function(scheem_parse) {
          ["quote", "blah"] ],
 
         ["'(hello world 123)",
-         ["quote", "hello", "world", "123"] ],
+         ["quote", ["hello", "world", "123"]] ],
 
         ["'x",
          scheem_parse("(quote x)") ],

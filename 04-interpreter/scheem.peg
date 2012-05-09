@@ -31,4 +31,4 @@ expression =
   / '(' result: expression+ ')' whitespace*
     { return result; }
   / "'" quote: expression whitespace*
-    { return ["quote"].concat(quote); }
+    { return ["quote", quote]; }
