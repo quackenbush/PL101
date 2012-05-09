@@ -16,29 +16,61 @@ var assert = chai.assert;
 var SCHEEM_T = '#t';
 var SCHEEM_F = '#f';
 
+var scheem_check_size = function(expr, min_size, max_size) {
+    if ((expr.length < min_size) ||
+        (expr.length > max_size))
+        throw new Error("Invalid number of args for " + expr[0]);
+};
+
+var scheem_set = function(expr, env, do_set) {
+    var key;
+
+    scheem_check_size(expr, 3, 3);
+    key = expr[1];
+    if (typeof key !== 'string')
+        throw new Error("Variable must be a string");
+
+    if (do_set)
+    {
+        // set! function
+        if (! (key in env))
+            throw new Error("Variable " + key + " unknown");
+    }
+    env[key] = scheem_eval(expr[2], env);
+    return 0;
+};
+
 var scheem_eval = function (expr, env) {
     // Numbers evaluate to themselves
-    if (typeof expr === 'number') {
+    if (typeof expr === 'number')
         return expr;
-    }
+
     if (typeof expr === 'string') {
+        if (! (expr in env))
+            throw new Error("Variable " + expr + " unknown");
         return env[expr];
     }
+
     // Look at head of list for operation
     switch (expr[0]) {
         case '+':
+            scheem_check_size(expr, 3, 3);
             return scheem_eval(expr[1], env) + scheem_eval(expr[2], env);
 
         case '-':
+            scheem_check_size(expr, 3, 3);
             return scheem_eval(expr[1], env) - scheem_eval(expr[2], env);
 
         case '*':
+            scheem_check_size(expr, 3, 3);
             return scheem_eval(expr[1], env) * scheem_eval(expr[2], env);
 
         case '/':
+            scheem_check_size(expr, 3, 3);
             return scheem_eval(expr[1], env) / scheem_eval(expr[2], env);
 
-        case '!':
+        case '!': // boolean 'not' operator
+            scheem_check_size(expr, 2, 2);
             result = scheem_eval(expr[1], env);
             if (result == 0 || result === SCHEEM_F)
                 return SCHEEM_T;
@@ -46,9 +78,11 @@ var scheem_eval = function (expr, env) {
                 return SCHEEM_F;
 
         case '=':
+            scheem_check_size(expr, 3, 3);
             return scheem_eval(expr[1], env) === scheem_eval(expr[2], env) ? SCHEEM_T : SCHEEM_F;
 
         case '<':
+            scheem_check_size(expr, 3, 3);
             return scheem_eval(expr[1], env) < scheem_eval(expr[2], env) ? SCHEEM_T : SCHEEM_F;
 
         case 'begin':
@@ -69,14 +103,17 @@ var scheem_eval = function (expr, env) {
             return scheem_eval(expr[1]).slice(1);
 
         case 'cons':
+            scheem_check_size(expr, 3, 3);
             return [scheem_eval(expr[1])].concat(scheem_eval(expr[2]));
 
         case 'define':
+            return scheem_set(expr, env, false);
+
         case 'set!':
-            env[expr[1]] = scheem_eval(expr[2], env);
-            return 0;
+            return scheem_set(expr, env, true);
 
         case 'if':
+            scheem_check_size(expr, 4, 4);
             var term = scheem_eval(expr[1], env);
             if (term === SCHEEM_T)
                 return scheem_eval(expr[2], env);
@@ -84,6 +121,7 @@ var scheem_eval = function (expr, env) {
                 return scheem_eval(expr[3], env);
 
         case 'quote':
+            scheem_check_size(expr, 2, 2);
             return expr[1];
 
         default:
@@ -110,7 +148,28 @@ function run_parse_tests(name, tests) {
     var i;
     for (i = 0; i < tests.length; i++)
     {
+        // For some reason we have to have test() inside a separate function for it to register
         compare_scheem(i + 1, tests[i]);
+    };
+}
+
+function assert_scheem_error(num, t)
+{
+    var test_name = t[0];
+    var env = t[1];
+    var input = t[2];
+
+    test('Test ' + num + ': ' + test_name, function() {
+        assert.throws(function() { scheem_eval(input, env); });
+    });
+}
+
+function run_parse_error_tests(error_tests) {
+    var i;
+    for (i = 0; i < error_tests.length; i++)
+    {
+        // For some reason we have to have test() inside a separate function for it to register
+        assert_scheem_error(i + 1, error_tests[i]);
     };
 }
 
@@ -288,9 +347,71 @@ suite('lists', function() {
 // Error injection: http://nathansuniversity.com/scheem11.html
 
 suite('error-checking', function() {
-    test('err', function() {
-        assert.throws(function() { scheem_eval(['+', 1, 2], {}); });
-    });
+    ENV = {foo: 3};
+    ERROR_TESTS = [
+        // (set!)
+        ["set! on an undefined variable",
+         ENV,
+         ['set!', 'unk', 2]],
+
+        ["set! with no args",
+         ENV,
+         ['set!']],
+
+        ["set! with 1 arg",
+         ENV,
+         ['set!', 'foo']],
+
+        ["set! with too many args",
+         ENV,
+         ['set!', 'foo', 1, 2]],
+
+        // (define)
+        ["define with no args",
+         ENV,
+         ['define']],
+
+        ["define with 1 arg",
+         ENV,
+         ['define', 'foo']],
+
+        ["define with a number",
+         ENV,
+         ['define', 3, 4]],
+
+        ["define with too many args",
+         ENV,
+         ['set!', 'foo', 1, 2]],
+
+        // (quote)
+        ["quote with no args",
+         ENV,
+         ['quote']],
+
+        // (+)
+        ["+ with too few args",
+         ENV,
+         ['+']],
+
+        ["+ with too few args",
+         ENV,
+         ['+', 1]],
+
+        ["+ with too many args",
+         ENV,
+         ['+', 1, 2, 3]],
+
+        ["+ with an unknown var",
+         ENV,
+         ['+', 'zed', 3]],
+
+        // (unknown)
+        ["unknown func",
+         ENV,
+         ['unknown']],
+        ];
+
+    run_parse_error_tests(ERROR_TESTS);
 });
 
   </script>
