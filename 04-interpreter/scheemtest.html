@@ -285,6 +285,14 @@ suite('lists', function() {
     run_parse_tests("lists", TESTS);
 });
 
+// Error injection: http://nathansuniversity.com/scheem11.html
+
+suite('error-checking', function() {
+    test('err', function() {
+        assert.throws(function() { scheem_eval(['+', 1, 2], {}); });
+    });
+});
+
   </script>
   <script>
     $(function(){
