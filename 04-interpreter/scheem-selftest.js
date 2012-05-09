@@ -2,21 +2,45 @@ var assert = require('assert');
 
 exports.scheem_selftest = function(scheem_parse) {
     var TESTS = [
-        ["(a b c)", ["a", "b", "c"] ],
-        ["(* b (+ 3 99 ) )", ["*", "b", ["+", "3", "99"]] ],
-        ["nizzleDizzle", "nizzleDizzle"],
-        ["(naz)", ["naz"] ],
+        ["(a b c)",
+         ["a", "b", "c"] ],
+
+        ["(* b (+ 3 99 ) )",
+         ["*", "b", ["+", "3", "99"]] ],
+
+        ["nizzleDizzle",
+         "nizzleDizzle"],
+
+        ["(naz)",
+         ["naz"] ],
 
         // Comment
-        ["((naz) ;; (blah)\n(foo bar))", [["naz"], ["foo", "bar"]] ],
+        ["((naz) ;; (blah)\n(foo bar))",
+         [["naz"], ["foo", "bar"]] ],
 
         // Quote
-        ["'blah", ["quote", "blah"] ],
-        ["'(hello world 123)", ["quote", "hello", "world", "123"] ],
-        ["'x", scheem_parse("(quote x)") ],
+        ["'blah",
+         ["quote", "blah"] ],
+
+        ["'(hello world 123)",
+         ["quote", "hello", "world", "123"] ],
+
+        ["'x",
+         scheem_parse("(quote x)") ],
+
+        ["(> 4 3)",
+         [">", 4, 3]],
+
+        // if
+        ["(if 3 9 5)",
+         ["if", 3, 9, 5]],
+
+        ["(if (> 4 3) 9 5)",
+         ["if", [">", 4, 3], 9, 5]],
 
         // Functions
-        ["(def x\n\t(lambda (x) (+ 1 x)))", ["def", "x", ["lambda", ["x"], ["+", "1", "x"]]] ],
+        ["(def x\n\t(lambda (x) (+ 1 x)))",
+         ["def", "x", ["lambda", ["x"], ["+", "1", "x"]]] ],
     ];
 
     var i;

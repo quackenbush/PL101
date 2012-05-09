@@ -4,7 +4,7 @@ start =
     expression
 
 validchar =
-    [0-9a-zA-Z_?!+\-=@#$%^&*/.]
+    [0-9a-zA-Z_?!<>+\-=@#$%^&*/.]
 
 comment =
     ";;" [^\n]*
@@ -13,9 +13,17 @@ whitespace =
     [ \n\t]
   / comment
 
-atom =
+variable =
     chars:validchar+
     { return chars.join(""); }
+
+integer =
+    digits:[0-9]+
+        { return parseInt(digits.join(""), 10); }
+
+atom =
+    integer
+  / variable
 
 expression =
     result: atom whitespace*

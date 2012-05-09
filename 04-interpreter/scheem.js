@@ -24,69 +24,39 @@ if (SELFTEST)
     selftest.scheem_selftest(scheem_parse);
 }
 
-var scheem_eval = function (expr, env) {
-    // Numbers evaluate to themselves
-    if (typeof expr === 'number') {
-        return expr;
-    }
-    if (typeof expr === 'string') {
-        return env[expr];
-    }
-    // Look at head of list for operation
-    switch (expr[0]) {
-        case '+':
-            return scheem_eval(expr[1], env) + scheem_eval(expr[2], env);
+var scheem_eval = require('./scheem-eval.js');
 
-        case '-':
-            return scheem_eval(expr[1], env) - scheem_eval(expr[2], env);
+console.log(scheem_eval.eval(['+', 101, 42], {}));
 
-        case '*':
-            return scheem_eval(expr[1], env) * scheem_eval(expr[2], env);
+var scheem_test = function() {
+    var TESTS = [
+        ["(+ 4 2)",
+         6],
 
-        case '/':
-            return scheem_eval(expr[1], env) / scheem_eval(expr[2], env);
+        ["(- (* 3 7) 6)",
+         (7 * 3) - 6],
 
-        case '<':
-            return scheem_eval(expr[1], env) < scheem_eval(expr[2], env) ? SCHEEM_T : SCHEEM_F;
+        ["(if (> 3 4) 9 5)",
+         5],
 
-        case 'begin':
-            //newEnv = env.slice();
-            var i;
-            var result;
+        ["(if (> 4 3) 9 5)",
+         9],
 
-            for (i = 1; i < expr.length; i++)
-            {
-                result = scheem_eval(expr[i], env);
-            }
-            return result;
+        ];
 
-        case 'car':
-            return scheem_eval(expr[1])[0];
+    var i;
+    var num_tests = TESTS.length;
+    for (i = 0; i < num_tests; i++)
+    {
+        var test = TESTS[i];
+        var input = test[0];
+        var expected = test[1];
+        var actual;
 
-        case 'cdr':
-            return scheem_eval(expr[1]).slice(1);
-
-        case 'cons':
-            return [scheem_eval(expr[1])].concat(scheem_eval(expr[2]));
-
-        case 'define':
-        case 'set!':
-            env[expr[1]] = scheem_eval(expr[2], env);
-            return 0;
-
-        case 'if':
-            var term = scheem_eval(expr[1], env);
-            if (term === SCHEEM_T)
-                return scheem_eval(expr[2], env);
-            else
-                return scheem_eval(expr[3], env);
-
-        case 'quote':
-            return expr[1];
-
-        default:
-            assert.fail("Op [" + expr[0] + "] not implemented");
+        console.log("Test " + (i + 1) + " / " + num_tests + ": " + input);
+        actual = scheem_eval.eval(scheem_parse(input));
+        assert.deepEqual(actual, expected);
     }
 };
 
-console.log('hello world\n');
+scheem_test();
