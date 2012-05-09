@@ -1,0 +1,176 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Scheem Tests</title>
+  <link rel="stylesheet" href="http://nathansuniversity.com/css/mocha.css" />
+  <script src="http://nathansuniversity.com/js/jquery-1.7.1.min.js">
+  </script>
+  <script src="http://nathansuniversity.com/js/chai.js">
+  </script>
+  <script src="http://nathansuniversity.com/js/mocha.js">
+  </script>
+  <script>mocha.setup('tdd')</script>
+  <script>
+var assert = chai.assert;
+
+var SCHEEM_T = '#t';
+var SCHEEM_F = '#f';
+
+var scheem_eval = function (expr, env) {
+    // Numbers evaluate to themselves
+    if (typeof expr === 'number') {
+        return expr;
+    }
+    if (typeof expr === 'string') {
+        return env[expr];
+    }
+    // Look at head of list for operation
+    switch (expr[0]) {
+        case '+':
+            return scheem_eval(expr[1], env) + scheem_eval(expr[2], env);
+
+        case '-':
+            return scheem_eval(expr[1], env) - scheem_eval(expr[2], env);
+
+        case '*':
+            return scheem_eval(expr[1], env) * scheem_eval(expr[2], env);
+
+        case '/':
+            return scheem_eval(expr[1], env) / scheem_eval(expr[2], env);
+
+        case '=':
+            return scheem_eval(expr[1], env) === scheem_eval(expr[2], env) ? SCHEEM_T : SCHEEM_F;
+
+        case '<':
+            return scheem_eval(expr[1], env) < scheem_eval(expr[2], env) ? SCHEEM_T : SCHEEM_F;
+
+        case 'begin':
+            //newEnv = env.slice();
+            var i;
+            var result;
+
+            for (i = 1; i < expr.length; i++)
+            {
+                result = scheem_eval(expr[i], env);
+            }
+            return result;
+
+        case 'car':
+            return scheem_eval(expr[1])[0];
+
+        case 'cdr':
+            return scheem_eval(expr[1]).slice(1);
+
+        case 'cons':
+            return [scheem_eval(expr[1])].concat(scheem_eval(expr[2]));
+
+        case 'define':
+        case 'set!':
+            env[expr[1]] = scheem_eval(expr[2], env);
+            return 0;
+
+        case 'if':
+            var term = scheem_eval(expr[1], env);
+            if (term === SCHEEM_T)
+                return scheem_eval(expr[2], env);
+            else
+                return scheem_eval(expr[3], env);
+
+        case 'quote':
+            return expr[1];
+
+        default:
+            console.log("Op [" + expr[0] + "] not implemented");
+            assert.fail("Op [" + expr[0] + "] not implemented");
+    }
+};
+
+// Some unit tests
+
+suite('quote', function() {
+    test('a number', function() {
+        assert.deepEqual(
+            scheem_eval(['quote', 3], {}),
+            3
+        );
+    });
+    test('an atom', function() {
+        assert.deepEqual(
+            scheem_eval(['quote', 'dog'], {}),
+            'dog'
+        );
+    });
+    test('a list', function() {
+        assert.deepEqual(
+            scheem_eval(['quote', [1, 2, 3]], {}),
+            [1, 2, 3]
+        );
+    });
+});
+
+suite('comparators', function() {
+    test('comparators', function() {
+        var ENV = {x: 42};
+        var TESTS = [
+            [ENV,
+             ['=', 'x', 41],
+             '#f'],
+
+            [ENV,
+             ['=', ['+', 'x', 1], 43],
+             '#t'],
+
+            [ENV,
+             ['<', 'x', 43],
+             '#t'],
+
+            [ENV,
+             ['=', 42, 'x'],
+             '#t'],
+        ];
+
+        var i;
+        var num_tests = TESTS.length;
+        for (i = 0; i < num_tests; i++)
+        {
+            var test = TESTS[i];
+            console.log("Test " + (i + 1) + " / " + num_tests + ": " + test[0]);
+            var actual = scheem_eval(test[1], test[0]);
+            var expected = test[2];
+            assert.deepEqual(actual, expected);
+        }
+    });
+});
+
+suite('add', function() {
+    test('two numbers', function() {
+        assert.deepEqual(
+            scheem_eval(['+', 3, 5], {}),
+            8
+        );
+    });
+    test('a number and an expression', function() {
+        assert.deepEqual(
+            scheem_eval(['+', 3, ['+', 2, 2]], {}),
+            7
+        );
+    });
+    test('a dog and a cat', function() {
+        assert.deepEqual(
+            scheem_eval(['+', 'dog', 'cat'], {'dog': 22, 'cat': 20}),
+            42
+        );
+    });
+});
+
+  </script>
+  <script>
+    $(function(){
+      mocha.run();
+    });
+  </script>
+</head>
+<body>
+  <div id="mocha"></div>
+</body>
+</html>
