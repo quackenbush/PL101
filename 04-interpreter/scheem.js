@@ -25,6 +25,9 @@ if (SELFTEST)
 }
 
 var scheem_eval = require('./scheem-eval.js');
+var scheem_eval_string = function(str, env) {
+    return scheem_eval.eval(scheem_parse(str), env);
+};
 
 console.log(scheem_eval.eval(['+', 101, 42], {}));
 
@@ -70,7 +73,7 @@ var scheem_test = function() {
         var actual;
 
         console.log("Test " + (i + 1) + " / " + num_tests + ": " + input);
-        actual = scheem_eval.eval(scheem_parse(input), {});
+        actual = scheem_eval_string(input, {});
         assert.deepEqual(actual, expected);
     }
 
