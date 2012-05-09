@@ -38,6 +38,13 @@ var scheem_eval = function (expr, env) {
         case '/':
             return scheem_eval(expr[1], env) / scheem_eval(expr[2], env);
 
+        case '!':
+            result = scheem_eval(expr[1], env);
+            if (result == 0 || result === SCHEEM_F)
+                return SCHEEM_T;
+            else
+                return SCHEEM_F;
+
         case '=':
             return scheem_eval(expr[1], env) === scheem_eval(expr[2], env) ? SCHEEM_T : SCHEEM_F;
 
@@ -85,82 +92,197 @@ var scheem_eval = function (expr, env) {
     }
 };
 
-// Some unit tests
+function compare_scheem(num, t)
+{
+    var env = t[0];
+    var input = t[1];
+    var expected = t[2];
+    var actual;
 
-suite('quote', function() {
-    test('a number', function() {
-        assert.deepEqual(
-            scheem_eval(['quote', 3], {}),
-            3
-        );
+    test('Test ' + num + ': ' + input, function() {
+        //console.log("Test " + (i + 1) + " / " + num_tests + ": " + test[0]);
+        actual = scheem_eval(input, env);
+        assert.deepEqual(actual, expected);
     });
-    test('an atom', function() {
-        assert.deepEqual(
-            scheem_eval(['quote', 'dog'], {}),
-            'dog'
-        );
-    });
-    test('a list', function() {
-        assert.deepEqual(
-            scheem_eval(['quote', [1, 2, 3]], {}),
-            [1, 2, 3]
-        );
-    });
-});
+}
+
+function run_parse_tests(name, tests) {
+    var i;
+    for (i = 0; i < tests.length; i++)
+    {
+        compare_scheem(i + 1, tests[i]);
+    };
+}
 
 suite('comparators', function() {
-    test('comparators', function() {
-        var ENV = {x: 42};
-        var TESTS = [
-            [ENV,
-             ['=', 'x', 41],
-             '#f'],
+    var ENV = {x: 42};
+    var TESTS = [
+        [ENV,
+         ['=', 'x', 41],
+         '#f'],
 
-            [ENV,
-             ['=', ['+', 'x', 1], 43],
-             '#t'],
+        [ENV,
+         ['=', ['+', 'x', 1], 43],
+         '#t'],
 
-            [ENV,
-             ['<', 'x', 43],
-             '#t'],
+        [ENV,
+         ['<', 'x', 43],
+         '#t'],
 
-            [ENV,
-             ['=', 42, 'x'],
-             '#t'],
-        ];
+        [ENV,
+         ['=', 42, 'x'],
+         '#t'],
+    ];
 
-        var i;
-        var num_tests = TESTS.length;
-        for (i = 0; i < num_tests; i++)
-        {
-            var test = TESTS[i];
-            console.log("Test " + (i + 1) + " / " + num_tests + ": " + test[0]);
-            var actual = scheem_eval(test[1], test[0]);
-            var expected = test[2];
-            assert.deepEqual(actual, expected);
-        }
-    });
+    run_parse_tests("comparators", TESTS);
 });
 
-suite('add', function() {
-    test('two numbers', function() {
-        assert.deepEqual(
-            scheem_eval(['+', 3, 5], {}),
-            8
-        );
-    });
-    test('a number and an expression', function() {
-        assert.deepEqual(
-            scheem_eval(['+', 3, ['+', 2, 2]], {}),
-            7
-        );
-    });
-    test('a dog and a cat', function() {
-        assert.deepEqual(
-            scheem_eval(['+', 'dog', 'cat'], {'dog': 22, 'cat': 20}),
-            42
-        );
-    });
+suite('alu', function() {
+    var ENV = {x: 42};
+    var TESTS = [
+        [ENV,
+         scheem_eval(['+', 3, 5], {}),
+         8],
+
+        [ENV,
+         ['+', 3, ['+', 2, 2]],
+         7],
+
+        [{'dog': 22, 'cat': 20},
+         ['+', 'dog', 'cat'],
+         42],
+
+        [{}, ['+', 12, 24],  36],
+        [{}, ['/', 64, 4],   16],
+        [{}, ['-', 12, 24],  -12],
+        [{}, ['*', 8, -3],   -24],
+    ];
+
+    run_parse_tests("add", TESTS);
+});
+
+suite('variables', function() {
+    var ENV = {x: 42, y: 2};
+    var TESTS = [
+        [ENV, ['+', 'x', 18],  60],
+        [ENV, ['/', 'x', 2],   21],
+        [ENV, ['-', 12, 'x'],  -30],
+        [ENV, ['*', 'y', 'x'], 84],
+    ];
+
+    run_parse_tests("variables", TESTS);
+});
+
+suite('defines', function() {
+    var ENV = {x: 42, y: 2};
+    var TESTS = [
+
+        [ENV,
+         ['define', 'nizzle', ['*', 42, 6]],
+         0],
+
+        [ENV,
+         ['+', 'nizzle', 'nizzle'],
+         42*6*2],
+
+        [ENV,
+         ['set!', 'nizzle', ['+', 'x', 'y']],
+         0],
+
+        [ENV,
+         ['set!', 'y', ['*', 'x', 'y']],
+         0],
+
+        [ENV,
+         ['+', 'y', 'nizzle'],
+         42+2+(42*2)],
+
+        [ENV,
+         ['set!', 'nizzle', 9],
+         0],
+
+        [ENV,
+         ['+', 'nizzle', 0],
+         9],
+    ];
+
+    run_parse_tests("defines", TESTS);
+});
+
+suite('conditionals', function() {
+    var ENV = {x: 42,
+               y: 2};
+
+    var TESTS = [
+        [ENV,
+         ['if', ['<', 'x', 5], 3, 10],
+         10],
+
+        [ENV,
+         ['if', ['<', 5, 'x'], 19, 7],
+         19],
+
+        [ENV,
+         ['if', ['=', 'x', 'y'], ['/', 1, 0], ['/', 48, 16]],
+         3],
+
+        [ENV,
+         ['if', ['!', ['=', 'x', 'y']], ['*', 12, ['+', 1, 1]], ['/', 48, 16]],
+         24],
+
+        [ENV,
+         ['if', ['!', ['!', ['=', 'x', 'y']]], ['*', 12, ['+', 1, 1]], ['/', 48, 16]],
+         3],
+    ];
+
+    run_parse_tests("conditionals", TESTS);
+});
+
+suite('lists', function() {
+    var ENV = {x: 42,
+               y: 2};
+
+    var TESTS = [
+        [ENV,
+         ['+', 1, 2],
+         3],
+
+        [ENV,
+         ['quote', 1],
+         1],
+
+        [ENV,
+         ['quote', ['+', 1]],
+         ['+', 1]],
+
+        [{},
+         ['quote', 'dog'],
+         'dog'],
+
+        [{},
+         ['quote', [1, 2, 3]],
+         [1, 2, 3]],
+
+        [ENV,
+         ['car', ['quote', ['+', '1', '2']]],
+         '+'],
+
+        [ENV,
+         ['car', ['cdr',
+                  ['quote', ['+', '1', '2']]]],
+         '1'],
+
+        [ENV,
+         ['cons', 1, ['quote', [2, 3]]],
+         [1, 2, 3]],
+
+        [ENV,
+         ['cons', ['quote', ['1', '2']], ['quote', [3, 4]]],
+         [['1', '2'], 3, 4]],
+
+    ];
+
+    run_parse_tests("lists", TESTS);
 });
 
   </script>
