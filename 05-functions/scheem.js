@@ -67,18 +67,37 @@ var scheem_test = function() {
         ["(let-one x 2 (+ x 1))",
          3],
 
-        // defun
-        ["(begin (defun double (x) (* 2 x)) (double 4))",
-         8],
+        // lambda-one
+        ["(define square (lambda-one x (* x x)))",
+         0],
 
-        ["(begin (defun square (x) (* x x)) (square (square 4)))",
-         (4*4)*(4*4)],
+        ["(begin (define square (lambda-one x (* x x))) (square 12))",
+         144],
 
-        ["(begin (defun abs (x) (if (> x 0) x (- 0 x))) (abs -123))",
+        ["(begin (define fact (lambda-one x (if (< x 2) x (* x (fact (- x 1)))))) (fact 3))",
+         6],
+
+        ["(begin (define abs (lambda-one x (if (> x 0) x (- x)))) (abs 123))",
          123],
 
-        ["(begin (defun abs (x) (if (> x 0) x (- 0 x))) (abs 234))",
+        ["(begin (define abs (lambda-one x (if (> x 0) x (- 0 x)))) (abs -234))",
          234],
+
+        //["(begin (define make-account (lambda-one balance (lambda-one amt (begin (set! balance (+ balance amt)) balance)))) (define a (make-account 100)) (a -20))",
+        // 234],
+
+        //// defun
+        //["(begin (defun double (x) (* 2 x)) (double 4))",
+        // 8],
+        //
+        //["(begin (defun square (x) (* x x)) (square (square 4)))",
+        // (4*4)*(4*4)],
+        //
+        //["(begin (defun abs (x) (if (> x 0) x (- 0 x))) (abs -123))",
+        // 123],
+        //
+        //["(begin (defun abs (x) (if (> x 0) x (- 0 x))) (abs 234))",
+        // 234],
 
         ];
 

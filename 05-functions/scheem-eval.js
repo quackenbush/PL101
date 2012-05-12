@@ -36,7 +36,7 @@ var scheem_let_one = function(expr, env) {
 };
 
 var scheem_lookup = function(env, v) {
-    if (env.length == 0)
+    if (! ('bindings' in env))
         throw new Error("symbol " + v + " unknown");
 
     if (v in env.bindings)
@@ -61,6 +61,7 @@ var scheem_defun = function(expr, env) {
 
 var scheem_eval_defun = function(expr, env) {
     var func = scheem_lookup(env, expr[0]);
+    return func(expr[1]);
     var args = func[0];
     var body = func[1];
     var expr_args = expr.slice(1);
@@ -172,13 +173,20 @@ var scheem_eval = function (expr, env) {
         case 'let-one':
             return scheem_let_one(expr, env);
 
+        case 'print':
+            console.log(scheem_eval(expr[1], env));
+            return 0;
+
         case 'lambda-one':
             var newfunc = function(arg) {
                 var bindings = {};
                 var newenv = {bindings: bindings,
                               outer: env};
-                bindings[expr[1]] = arg;
-                return evalScheem(expr[2], newenv);
+                //console.log('sym: ' + expr[1] + ', val: ' + arg + ', expr: ' + expr[2]);
+                // NOTE: the hack here:  applying to the current environment, not the sub-environment
+                //bindings[expr[1]] = scheem_eval(arg, newenv);
+                env.bindings[expr[1]] = scheem_eval(arg, newenv);
+                return scheem_eval(expr[2], newenv);
             };
             return newfunc;
 
