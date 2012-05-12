@@ -7,37 +7,37 @@ var scheem_check_size = function(expr, min_size, max_size) {
         throw new Error("Invalid number of args (" + expr.length + ") for " + expr[0] + ": " + expr.slice(1));
 };
 
-var scheem_update = function(env, key, value, do_define) {
+var scheem_update = function(env, symbol, value, do_define) {
     // set! function
     if (! ('bindings' in env))
-        throw new Error(key + " unknown");
+        throw new Error(symbol + " unknown");
 
-    if (key in env.bindings || do_define)
+    if (symbol in env.bindings || do_define)
     {
-        if (typeof key !== 'string')
-            throw new Error("Key must be a string (" + key + ")");
+        if (typeof symbol !== 'string')
+            throw new Error("Symbol must be a string (" + symbol + ")");
 
-        env.bindings[key] = scheem_eval(value, env);
+        env.bindings[symbol] = scheem_eval(value, env);
         return 0;
     }
 
-    return scheem_update(env.outer, key, value, false);
+    return scheem_update(env.outer, symbol, value, false);
 };
 
 var scheem_let_one = function(expr, env) {
     scheem_check_size(expr, 4, 4);
-    var key = expr[1];
+    var symbol = expr[1];
     var bindings = {};
     var new_env = {outer : env,
                    bindings : bindings};
 
-    bindings[key] = scheem_eval(expr[2], new_env);
+    bindings[symbol] = scheem_eval(expr[2], new_env);
     return scheem_eval(expr[3], new_env);
 };
 
 var scheem_lookup = function(env, v) {
     if (env.length == 0)
-        throw new Error("key " + v + " unknown");
+        throw new Error("symbol " + v + " unknown");
 
     if (v in env.bindings)
         return env.bindings[v];
@@ -171,6 +171,16 @@ var scheem_eval = function (expr, env) {
 
         case 'let-one':
             return scheem_let_one(expr, env);
+
+        case 'lambda-one':
+            var newfunc = function(arg) {
+                var bindings = {};
+                var newenv = {bindings: bindings,
+                              outer: env};
+                bindings[expr[1]] = arg;
+                return evalScheem(expr[2], newenv);
+            };
+            return newfunc;
 
         case 'defun':
             return scheem_defun(expr, env);

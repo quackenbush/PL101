@@ -13,8 +13,9 @@ var evalScheem = function (expr, env) {
         case 'quote':
             return expr[1];
         default:
-            // New stuff here
+            // Evaluate a function
             var func = lookup(env, expr[0]);
-            return func(evalScheem(expr[1], env));
+            var arg = evalScheem(expr[1], env);
+            return func(arg);
     }
 };
