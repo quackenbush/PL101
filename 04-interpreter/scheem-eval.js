@@ -13,7 +13,7 @@ var scheem_set = function(expr, env, do_set) {
     scheem_check_size(expr, 3, 3);
     // FIXME: when do we need to 'eval' the key?
     if (true)
-        key = expr[1] ;
+        key = expr[1];
     else
         key = scheem_eval(expr[1]);
 
@@ -28,6 +28,38 @@ var scheem_set = function(expr, env, do_set) {
     }
     env[key] = scheem_eval(expr[2], env);
     return 0;
+};
+
+var scheem_defun = function(expr, env) {
+    var function_name;
+
+    scheem_check_size(expr, 4, 4);
+    function_name = expr[1];
+
+    if (typeof function_name !== 'string')
+        throw new Error("Function must be a string (" + function_name + ")");
+
+    env[function_name] = [expr[2], expr[3]];
+    return 0;
+};
+
+var scheem_eval_defun = function(expr, env) {
+    var func = env[expr[0]];
+    var args = func[0];
+    var body = func[1];
+    var expr_args = expr.slice(1);
+    var new_env = new Object(env); // Copy the array
+    var i;
+    //scheem_check_size(expr, args.) {
+    if (args.length != expr_args.length) {
+        throw new Error('Invalid number of args (' + expr_args + ') for function ' + expr[0] + ' (expected ' + args.length + ' )');
+    }
+    for (i = 0; i < args.length; i++) {
+        new_env[args[i]] = scheem_eval(expr_args[i], new_env);
+        //console.log('' + args[i] + ' => ' + new_env[args[i]]);
+    }
+    return scheem_eval(body, new_env);
+    //throw new Error('' + args + ' => ' + expr_args);
 };
 
 var scheem_eval = function (expr, env) {
@@ -106,6 +138,9 @@ var scheem_eval = function (expr, env) {
         case 'set!':
             return scheem_set(expr, env, true);
 
+        case 'defun':
+            return scheem_defun(expr, env, false);
+
         case 'if':
             scheem_check_size(expr, 4, 4);
             var term = scheem_eval(expr[1], env);
@@ -119,8 +154,13 @@ var scheem_eval = function (expr, env) {
             return expr[1];
 
         default:
-            console.log("Op [" + expr[0] + "] not implemented");
-            assert.fail("Op [" + expr[0] + "] not implemented");
+            if (expr[0] in env) {
+                return scheem_eval_defun(expr, env);
+            }
+            else {
+                console.log("Op [" + expr[0] + "] not implemented");
+                assert.fail("Op [" + expr[0] + "] not implemented");
+            }
     }
 };
 

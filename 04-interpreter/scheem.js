@@ -61,6 +61,18 @@ var scheem_test = function() {
         ["(begin (define bar '(+ 3 4)) bar)",
          ['+', 3, 4]],
 
+        ["(begin (defun double (x) (* 2 x)) (double 4))",
+         8],
+
+        ["(begin (defun square (x) (* x x)) (square (square 4)))",
+         (4*4)*(4*4)],
+
+        ["(begin (defun abs (x) (if (> x 0) x (- 0 x))) (abs -123))",
+         123],
+
+        ["(begin (defun abs (x) (if (> x 0) x (- 0 x))) (abs 234))",
+         234],
+
         ];
 
     var i;
@@ -82,3 +94,9 @@ var scheem_test = function() {
 };
 
 scheem_test();
+
+// If we are used as Node module, export evalScheem
+if (typeof module !== 'undefined') {
+    module.exports.scheem_eval_string = scheem_eval_string;
+    module.exports.scheem_eval = scheem_eval;
+}

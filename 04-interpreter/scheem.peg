@@ -1,4 +1,5 @@
 // Scheem Grammar
+// Using PEG.js: http://pegjs.majda.cz/
 
 start =
     expression
@@ -18,7 +19,8 @@ variable =
     { return chars.join(""); }
 
 integer =
-    digits:[0-9]+
+    "-" negative:integer { return -negative; }
+  / digits:[0-9]+
         { return parseInt(digits.join(""), 10); }
 
 atom =
