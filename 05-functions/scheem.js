@@ -26,7 +26,9 @@ if (SELFTEST)
 
 var scheem_eval = require('./scheem-eval.js');
 var scheem_eval_string = function(str, env) {
-    return scheem_eval.eval(scheem_parse(str), env);
+    e = {bindings: env,
+         outer: {}};
+    return scheem_eval.eval(scheem_parse(str), e);
 };
 
 console.log(scheem_eval.eval(['+', 101, 42], {}));
@@ -61,6 +63,11 @@ var scheem_test = function() {
         ["(begin (define bar '(+ 3 4)) bar)",
          ['+', 3, 4]],
 
+        // let
+        ["(let-one x 2 (+ x 1))",
+         3],
+
+        // defun
         ["(begin (defun double (x) (* 2 x)) (double 4))",
          8],
 

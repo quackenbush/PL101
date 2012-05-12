@@ -7,7 +7,7 @@ var scheem_check_size = function(expr, min_size, max_size) {
         throw new Error("Invalid number of args (" + expr.length + ") for " + expr[0] + ": " + expr.slice(1));
 };
 
-var scheem_set = function(expr, env, do_set) {
+var scheem_update = function(expr, env, do_set) {
     var key;
 
     scheem_check_size(expr, 3, 3);
@@ -23,11 +23,32 @@ var scheem_set = function(expr, env, do_set) {
     if (do_set)
     {
         // set! function
-        if (! (key in env))
+        if (! (key in env.bindings))
             throw new Error("Variable " + key + " unknown");
     }
-    env[key] = scheem_eval(expr[2], env);
+    env.bindings[key] = scheem_eval(expr[2], env);
     return 0;
+};
+
+var scheem_let_one = function(expr, env) {
+    scheem_check_size(expr, 4, 4);
+    var key = expr[1];
+    var bindings = {};
+    var new_env = {outer : env,
+                   bindings : bindings};
+
+    bindings[key] = scheem_eval(expr[2], new_env);
+    return scheem_eval(expr[3], new_env);
+};
+
+var scheem_lookup = function(env, v, type) {
+    if (env.length == 0)
+        throw new Error(type + " " + v + " unknown");
+
+    if (v in env.bindings)
+        return env.bindings[v];
+
+    return scheem_lookup(env.outer, v, type);
 };
 
 var scheem_defun = function(expr, env) {
@@ -39,27 +60,31 @@ var scheem_defun = function(expr, env) {
     if (typeof function_name !== 'string')
         throw new Error("Function must be a string (" + function_name + ")");
 
-    env[function_name] = [expr[2], expr[3]];
+    env.bindings[function_name] = [expr[2], expr[3]];
+    //console.log(env.bindings);
     return 0;
 };
 
 var scheem_eval_defun = function(expr, env) {
-    var func = env[expr[0]];
+    var func = scheem_lookup(env, expr[0], "Function");
     var args = func[0];
     var body = func[1];
     var expr_args = expr.slice(1);
-    var new_env = new Object(env); // Copy the array
+    var bindings = {}
+    var new_env = {bindings: bindings,
+                   outer: env};
     var i;
     //scheem_check_size(expr, args.) {
     if (args.length != expr_args.length) {
         throw new Error('Invalid number of args (' + expr_args + ') for function ' + expr[0] + ' (expected ' + args.length + ' )');
     }
+    // Bind function arguments
     for (i = 0; i < args.length; i++) {
-        new_env[args[i]] = scheem_eval(expr_args[i], new_env);
+        bindings[args[i]] = scheem_eval(expr_args[i], new_env);
         //console.log('' + args[i] + ' => ' + new_env[args[i]]);
     }
+    //console.log(bindings);
     return scheem_eval(body, new_env);
-    //throw new Error('' + args + ' => ' + expr_args);
 };
 
 var scheem_eval = function (expr, env) {
@@ -68,9 +93,7 @@ var scheem_eval = function (expr, env) {
         return expr;
 
     if (typeof expr === 'string') {
-        if (! (expr in env))
-            throw new Error("Variable " + expr + " unknown");
-        return env[expr];
+        return scheem_lookup(env, expr, "Variable");
     }
 
     // Look at head of list for operation
@@ -133,13 +156,10 @@ var scheem_eval = function (expr, env) {
             return [scheem_eval(expr[1])].concat(scheem_eval(expr[2]));
 
         case 'define':
-            return scheem_set(expr, env, false);
+            return scheem_update(expr, env, false);
 
         case 'set!':
-            return scheem_set(expr, env, true);
-
-        case 'defun':
-            return scheem_defun(expr, env, false);
+            return scheem_update(expr, env, true);
 
         case 'if':
             scheem_check_size(expr, 4, 4);
@@ -153,14 +173,14 @@ var scheem_eval = function (expr, env) {
             scheem_check_size(expr, 2, 2);
             return expr[1];
 
+        case 'let-one':
+            return scheem_let_one(expr, env);
+
+        case 'defun':
+            return scheem_defun(expr, env);
+
         default:
-            if (expr[0] in env) {
-                return scheem_eval_defun(expr, env);
-            }
-            else {
-                console.log("Op [" + expr[0] + "] not implemented");
-                assert.fail("Op [" + expr[0] + "] not implemented");
-            }
+            return scheem_eval_defun(expr, env);
     }
 };
 
