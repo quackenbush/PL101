@@ -7,27 +7,21 @@ var scheem_check_size = function(expr, min_size, max_size) {
         throw new Error("Invalid number of args (" + expr.length + ") for " + expr[0] + ": " + expr.slice(1));
 };
 
-var scheem_update = function(expr, env, do_set) {
-    var key;
+var scheem_update = function(env, key, value, do_define) {
+    // set! function
+    if (! ('bindings' in env))
+        throw new Error(key + " unknown");
 
-    scheem_check_size(expr, 3, 3);
-    // FIXME: when do we need to 'eval' the key?
-    if (true)
-        key = expr[1];
-    else
-        key = scheem_eval(expr[1]);
-
-    if (typeof key !== 'string')
-        throw new Error("Variable must be a string (" + key + ")");
-
-    if (do_set)
+    if (key in env.bindings || do_define)
     {
-        // set! function
-        if (! (key in env.bindings))
-            throw new Error("Variable " + key + " unknown");
+        if (typeof key !== 'string')
+            throw new Error("Key must be a string (" + key + ")");
+
+        env.bindings[key] = scheem_eval(value, env);
+        return 0;
     }
-    env.bindings[key] = scheem_eval(expr[2], env);
-    return 0;
+
+    return scheem_update(env.outer, key, value, false);
 };
 
 var scheem_let_one = function(expr, env) {
@@ -41,14 +35,14 @@ var scheem_let_one = function(expr, env) {
     return scheem_eval(expr[3], new_env);
 };
 
-var scheem_lookup = function(env, v, type) {
+var scheem_lookup = function(env, v) {
     if (env.length == 0)
-        throw new Error(type + " " + v + " unknown");
+        throw new Error("key " + v + " unknown");
 
     if (v in env.bindings)
         return env.bindings[v];
 
-    return scheem_lookup(env.outer, v, type);
+    return scheem_lookup(env.outer, v);
 };
 
 var scheem_defun = function(expr, env) {
@@ -66,7 +60,7 @@ var scheem_defun = function(expr, env) {
 };
 
 var scheem_eval_defun = function(expr, env) {
-    var func = scheem_lookup(env, expr[0], "Function");
+    var func = scheem_lookup(env, expr[0]);
     var args = func[0];
     var body = func[1];
     var expr_args = expr.slice(1);
@@ -93,7 +87,7 @@ var scheem_eval = function (expr, env) {
         return expr;
 
     if (typeof expr === 'string') {
-        return scheem_lookup(env, expr, "Variable");
+        return scheem_lookup(env, expr);
     }
 
     // Look at head of list for operation
@@ -156,10 +150,12 @@ var scheem_eval = function (expr, env) {
             return [scheem_eval(expr[1])].concat(scheem_eval(expr[2]));
 
         case 'define':
-            return scheem_update(expr, env, false);
+            scheem_check_size(expr, 3, 3);
+            return scheem_update(env, expr[1], expr[2], true);
 
         case 'set!':
-            return scheem_update(expr, env, true);
+            scheem_check_size(expr, 3, 3);
+            return scheem_update(env, expr[1], expr[2], false);
 
         case 'if':
             scheem_check_size(expr, 4, 4);
