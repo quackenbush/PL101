@@ -1,0 +1,36 @@
+// Scheem Grammar
+// Using PEG.js: http://pegjs.majda.cz/
+
+start =
+    expression
+
+validchar =
+    [0-9a-zA-Z_?!<>+\-=@#$%^&*/.]
+
+comment =
+    ";;" [^\n]*
+
+whitespace =
+    [ \n\t]
+  / comment
+
+variable =
+    chars:validchar+
+    { return chars.join(""); }
+
+integer =
+    "-" negative:integer { return -negative; }
+  / digits:[0-9]+
+        { return parseInt(digits.join(""), 10); }
+
+atom =
+    integer
+  / variable
+
+expression =
+    result: atom whitespace*
+    { return result; }
+  / '(' result: expression+ ')' whitespace*
+    { return result; }
+  / "'" quote: expression whitespace*
+    { return ["quote", quote]; }
