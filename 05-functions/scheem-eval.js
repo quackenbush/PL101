@@ -87,28 +87,8 @@ function scheem_eval (expr, env) {
         return scheem_lookup(env, expr);
     }
 
-    // Look at head of list for operation
+    // Scheem special forms
     switch (expr[0]) {
-        case '!': // boolean 'not' operator
-            scheem_check_size(expr, 2, 2);
-            result = scheem_eval(expr[1], env);
-            if (result == 0 || result === SCHEEM_F)
-                return SCHEEM_T;
-            else
-                return SCHEEM_F;
-
-        case '=':
-            scheem_check_size(expr, 3, 3);
-            return scheem_eval(expr[1], env) === scheem_eval(expr[2], env) ? SCHEEM_T : SCHEEM_F;
-
-        case '>':
-            scheem_check_size(expr, 3, 3);
-            return scheem_eval(expr[1], env) > scheem_eval(expr[2], env) ? SCHEEM_T : SCHEEM_F;
-
-        case '<':
-            scheem_check_size(expr, 3, 3);
-            return scheem_eval(expr[1], env) < scheem_eval(expr[2], env) ? SCHEEM_T : SCHEEM_F;
-
         case 'begin':
             var i;
             var result;
@@ -118,16 +98,6 @@ function scheem_eval (expr, env) {
                 result = scheem_eval(expr[i], env);
             }
             return result;
-
-        case 'car':
-            return scheem_eval(expr[1])[0];
-
-        case 'cdr':
-            return scheem_eval(expr[1]).slice(1);
-
-        case 'cons':
-            scheem_check_size(expr, 3, 3);
-            return [scheem_eval(expr[1])].concat(scheem_eval(expr[2]));
 
         case 'define':
             scheem_check_size(expr, 3, 3);
@@ -151,10 +121,6 @@ function scheem_eval (expr, env) {
 
         case 'let-one':
             return scheem_let_one(expr, env);
-
-        case 'print':
-            console.log(scheem_eval(expr[1], env));
-            return 0;
 
         case 'lambda-one':
             var sym = expr[1];
@@ -185,12 +151,23 @@ function scheem_eval (expr, env) {
 };
 
 function scheem_eval_global (expr, env) {
-    default_bindings = {'+': function(x) { return x[0] + x[1]; },
-                        '-': function(x) { return x[0] - x[1]; },
-                        '*': function(x) { return x[0] * x[1]; },
-                        '/': function(x) { return x[0] / x[1]; },
-                       };
-    default_env = {bindings: default_bindings,
+    DEFAULT_BINDINGS = {
+        '+': function(x) { return x[0] + x[1]; },
+        '-': function(x) { return x[0] - x[1]; },
+        '*': function(x) { return x[0] * x[1]; },
+        '/': function(x) { return x[0] / x[1]; },
+        '=': function(x) { return x[0] == x[1] ? SCHEEM_T : SCHEEM_F; },
+        '!': function(x) { return (x[0] == 0 || x[0] == SCHEEM_F) ? SCHEEM_T : SCHEEM_F; },
+        '<': function(x) { return x[0] <  x[1] ? SCHEEM_T : SCHEEM_F; },
+        '>': function(x) { return x[0] >  x[1] ? SCHEEM_T : SCHEEM_F; },
+
+        'car':   function(x) { return x[0][0]; },
+        'cdr':   function(x) { return x[0].slice(1); },
+        'cons':  function(x) { return [x[0]].concat(x[1]); },
+        'print': function(x) { console.log(expr[1]); },
+    };
+
+    default_env = {bindings: DEFAULT_BINDINGS,
                    outer: {}};
     e = {bindings: env,
          outer: default_env};
