@@ -35,6 +35,29 @@ console.log(scheem_eval.eval(['+', 101, 42], {}));
 
 var scheem_test = function() {
     var TESTS = [
+        // quote
+        ["'(xx yy zz)",
+         ["xx", "yy", 'zz']],
+
+        ["(quote (1 aa 123 456))",
+         [1, "aa", 123, 456]],
+
+        // car/cdr
+        ["(car '(xx yy zz))",
+         "xx"],
+
+        ["(cdr '(abc def ghi))",
+         ["def", "ghi"]],
+
+        ["(cdr (cdr '(abc def ghi)))",
+         ["ghi"]],
+
+        ["(car (cdr '(abc def ghi)))",
+         "def"],
+
+        ["(car '(4 2))",
+         4],
+
         // Arithmetic
         ["(+ 4 2)",
          6],
