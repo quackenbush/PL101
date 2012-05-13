@@ -83,9 +83,9 @@ function scheem_eval (expr, env) {
     if (typeof expr === 'number')
         return expr;
 
-    if (typeof expr === 'string') {
+    // Symbol lookup
+    if (typeof expr === 'string')
         return scheem_lookup(env, expr);
-    }
 
     // Scheem special forms
     switch (expr[0]) {
@@ -136,7 +136,7 @@ function scheem_eval (expr, env) {
             return scheem_defun(expr, env);
 
         default:
-            // Assume lambda
+            // Lambda evaluation
             // HACK: this is probably a let() or apply() func
             var func = scheem_lookup(env, expr[0]);
             var args = expr.slice(1);
