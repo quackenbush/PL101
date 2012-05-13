@@ -24,7 +24,7 @@ var scheem_update = function(env, symbol, value, do_define) {
     return scheem_update(env.outer, symbol, value, false);
 };
 
-var scheem_let_one = function(expr, env) {
+function scheem_let_one (expr, env) {
     scheem_check_size(expr, 4, 4);
     var symbol = expr[1];
     var bindings = {};
@@ -35,7 +35,7 @@ var scheem_let_one = function(expr, env) {
     return scheem_eval(expr[3], new_env);
 };
 
-var scheem_lookup = function(env, v) {
+function scheem_lookup (env, v) {
     if (! ('bindings' in env))
         throw new Error("symbol " + v + " unknown");
 
@@ -45,7 +45,7 @@ var scheem_lookup = function(env, v) {
     return scheem_lookup(env.outer, v);
 };
 
-var scheem_defun = function(expr, env) {
+function scheem_defun (expr, env) {
     var function_name;
 
     scheem_check_size(expr, 4, 4);
@@ -59,30 +59,27 @@ var scheem_defun = function(expr, env) {
     return 0;
 };
 
-var scheem_eval_defun = function(expr, env) {
-    var func = scheem_lookup(env, expr[0]);
-    return func(expr[1]);
-    var args = func[0];
-    var body = func[1];
-    var expr_args = expr.slice(1);
-    var bindings = {}
-    var new_env = {bindings: bindings,
-                   outer: env};
-    var i;
-    //scheem_check_size(expr, args.) {
-    if (args.length != expr_args.length) {
-        throw new Error('Invalid number of args (' + expr_args + ') for function ' + expr[0] + ' (expected ' + args.length + ' )');
-    }
-    // Bind function arguments
-    for (i = 0; i < args.length; i++) {
-        bindings[args[i]] = scheem_eval(expr_args[i], new_env);
-        //console.log('' + args[i] + ' => ' + new_env[args[i]]);
-    }
-    //console.log(bindings);
-    return scheem_eval(body, new_env);
+function bind_env (env, v, val) {
+    env.bindings[v] = val;
 };
 
-var scheem_eval = function (expr, env) {
+function gen_lambda (env, syms, body) {
+    var newfunc = function(args) {
+        var bindings = {};
+        var i = 0;
+        var newenv = {bindings: bindings,
+                      outer: env};
+        //console.log('syms: ' + syms + ', args: ' + args + ', expr: ' + body);
+        // NOTE: the hack here:  applying to the current environment, not the sub-environment
+        for (i = 0; i < syms.length; i++) {
+            bind_env(env, syms[i], scheem_eval(args[i], newenv));
+        }
+        return scheem_eval(body, env);
+    };
+    return newfunc;
+}
+
+function scheem_eval (expr, env) {
     // Numbers evaluate to themselves
     if (typeof expr === 'number')
         return expr;
@@ -178,23 +175,22 @@ var scheem_eval = function (expr, env) {
             return 0;
 
         case 'lambda-one':
-            var newfunc = function(arg) {
-                var bindings = {};
-                var newenv = {bindings: bindings,
-                              outer: env};
-                //console.log('sym: ' + expr[1] + ', val: ' + arg + ', expr: ' + expr[2]);
-                // NOTE: the hack here:  applying to the current environment, not the sub-environment
-                //bindings[expr[1]] = scheem_eval(arg, newenv);
-                env.bindings[expr[1]] = scheem_eval(arg, newenv);
-                return scheem_eval(expr[2], newenv);
-            };
-            return newfunc;
+            var sym = expr[1];
+            var body = expr[2];
+            return gen_lambda(env, [sym], body);
+
+        case 'lambda':
+            var syms = expr[1];
+            var body = expr[2];
+            return gen_lambda(env, syms, body);
 
         case 'defun':
             return scheem_defun(expr, env);
 
         default:
-            return scheem_eval_defun(expr, env);
+            // Assume lambda
+            var func = scheem_lookup(env, expr[0]);
+            return func(expr.slice(1)); // lambda
     }
 };
 

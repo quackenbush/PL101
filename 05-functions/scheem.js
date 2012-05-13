@@ -83,8 +83,24 @@ var scheem_test = function() {
         ["(begin (define abs (lambda-one x (if (> x 0) x (- 0 x)))) (abs -234))",
          234],
 
-        //["(begin (define make-account (lambda-one balance (lambda-one amt (begin (set! balance (+ balance amt)) balance)))) (define a (make-account 100)) (a -20))",
-        // 234],
+        ["(begin (define balance 100) (define nizzle (lambda-one amt (begin (set! balance (+ balance amt)) balance))) (nizzle 25) (nizzle 25))",
+         150],
+
+        // (closure)
+        ["(begin (define make-account (lambda-one balance (lambda-one amt (begin (set! balance (+ balance amt)) balance)))) (define a (make-account 100)) (a -20) (a -30))",
+         50],
+
+        ["(begin (define plus (lambda (x y) (+ x y))) (plus 222 333))",
+         222+333],
+
+        ["(begin (define plus3 (lambda (x y z) (+ (+ x y) z))) (plus3 222 333 444))",
+         222+333+444],
+
+        ["(begin (define square (lambda (x) (* x x))) (square 16))",
+         16*16],
+
+        ["(begin (define square (lambda (x) (* x x))) (square (square 16)))",
+         16*16*(16*16)],
 
         //// defun
         //["(begin (defun double (x) (* 2 x)) (double 4))",
