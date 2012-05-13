@@ -10,7 +10,7 @@ var scheem_check_size = function(expr, min_size, max_size) {
 var scheem_update = function(env, symbol, value, do_define) {
     // set! function
     if (! ('bindings' in env))
-        throw new Error(symbol + " unknown");
+        throw new Error('symbol ' + symbol + " unknown");
 
     if (symbol in env.bindings || do_define)
     {
@@ -55,7 +55,6 @@ function scheem_defun (expr, env) {
         throw new Error("Function must be a string (" + function_name + ")");
 
     env.bindings[function_name] = [expr[2], expr[3]];
-    //console.log(env.bindings);
     return 0;
 };
 
@@ -90,22 +89,6 @@ function scheem_eval (expr, env) {
 
     // Look at head of list for operation
     switch (expr[0]) {
-        case '+':
-            scheem_check_size(expr, 3, 3);
-            return scheem_eval(expr[1], env) + scheem_eval(expr[2], env);
-
-        case '-':
-            scheem_check_size(expr, 3, 3);
-            return scheem_eval(expr[1], env) - scheem_eval(expr[2], env);
-
-        case '*':
-            scheem_check_size(expr, 3, 3);
-            return scheem_eval(expr[1], env) * scheem_eval(expr[2], env);
-
-        case '/':
-            scheem_check_size(expr, 3, 3);
-            return scheem_eval(expr[1], env) / scheem_eval(expr[2], env);
-
         case '!': // boolean 'not' operator
             scheem_check_size(expr, 2, 2);
             result = scheem_eval(expr[1], env);
@@ -127,7 +110,6 @@ function scheem_eval (expr, env) {
             return scheem_eval(expr[1], env) < scheem_eval(expr[2], env) ? SCHEEM_T : SCHEEM_F;
 
         case 'begin':
-            //newEnv = env.slice();
             var i;
             var result;
 
@@ -189,9 +171,30 @@ function scheem_eval (expr, env) {
 
         default:
             // Assume lambda
+            // HACK: this is probably a let() or apply() func
             var func = scheem_lookup(env, expr[0]);
-            return func(expr.slice(1)); // lambda
+            var args = expr.slice(1);
+            var a = [];
+            var i;
+            for (i = 0; i < args.length; i++)
+            {
+                a.push(scheem_eval(args[i], env));
+            }
+            return func(a);
     }
 };
 
-exports.eval = scheem_eval;
+function scheem_eval_global (expr, env) {
+    default_bindings = {'+': function(x) { return x[0] + x[1]; },
+                        '-': function(x) { return x[0] - x[1]; },
+                        '*': function(x) { return x[0] * x[1]; },
+                        '/': function(x) { return x[0] / x[1]; },
+                       };
+    default_env = {bindings: default_bindings,
+                   outer: {}};
+    e = {bindings: env,
+         outer: default_env};
+    return scheem_eval(expr, e);
+};
+
+exports.eval = scheem_eval_global;

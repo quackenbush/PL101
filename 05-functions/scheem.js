@@ -25,11 +25,10 @@ if (SELFTEST)
 }
 
 var scheem_eval = require('./scheem-eval.js');
-var scheem_eval_string = function(str, env) {
-    e = {bindings: env,
-         outer: {}};
-    return scheem_eval.eval(scheem_parse(str), e);
-};
+
+function scheem_eval_string (str, env) {
+    return scheem_eval.eval(scheem_parse(str), env);
+}
 
 console.log(scheem_eval.eval(['+', 101, 42], {}));
 
@@ -38,6 +37,9 @@ var scheem_test = function() {
         // quote
         ["'(xx yy zz)",
          ["xx", "yy", 'zz']],
+
+        //["($ 9 10)",
+        // ["xx", "yy", 'zz']],
 
         ["(quote (1 aa 123 456))",
          [1, "aa", 123, 456]],
