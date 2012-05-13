@@ -123,8 +123,8 @@ var scheem_test = function() {
         ["(begin (define square (lambda-one x (* x x))) (square 12))",
          144],
 
-        ["(begin (define fact (lambda-one x (if (< x 2) x (* x (fact (- x 1)))))) (fact 3))",
-         6],
+        ["(begin (define fact (lambda-one x (if (< x 2) x (* x (fact (- x 1)))))) (fact 12))",
+         12*11*10*9*8*7*6*5*4*3*2*1],
 
         ["(begin (define abs (lambda-one x (if (> x 0) x (- x)))) (abs 123))",
          123],
@@ -150,6 +150,16 @@ var scheem_test = function() {
 
         ["(begin (define square (lambda (x) (* x x))) (square (square 16)))",
          16*16*(16*16)],
+
+        ["(begin (define a (lambda ( ) 42)) (a))",
+         42],
+
+        ["(begin (define a 10) (define test (lambda () (set! a (+ a 20)))) (test) a)",
+         30],
+
+        // FAIL
+        //["((lambda () 10))",
+        // 10],
 
         //// defun
         //["(begin (defun double (x) (* 2 x)) (double 4))",

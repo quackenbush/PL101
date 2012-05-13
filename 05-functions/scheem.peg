@@ -30,7 +30,7 @@ atom =
 expression =
     result: atom whitespace*
     { return result; }
-  / '(' result: expression+ ')' whitespace*
+  / '(' result: expression* whitespace? ')' whitespace*
     { return result; }
   / "'" quote: expression whitespace*
     { return ["quote", quote]; }
