@@ -34,12 +34,19 @@ console.log(scheem_eval.eval(['+', 101, 42], {}));
 
 var scheem_test = function() {
     var TESTS = [
+        // Dynamic function names
+        ["((lambda () 10))",
+         10],
+
+        ["((if (> 3 4) + -) 20 30)",
+         -10],
+
+        ["((if (> 4 3) + -) 20 30)",
+         50],
+
         // quote
         ["'(xx yy zz)",
          ["xx", "yy", 'zz']],
-
-        //["($ 9 10)",
-        // ["xx", "yy", 'zz']],
 
         ["(quote (1 aa 123 456))",
          [1, "aa", 123, 456]],
@@ -113,7 +120,7 @@ var scheem_test = function() {
          ['+', 3, 4]],
 
         // let
-        ["(let-one x 2 (+ x 1))",
+        ["(let ((x 2)) (+ x 1))",
          3],
 
         // lambda-one
@@ -123,8 +130,13 @@ var scheem_test = function() {
         ["(begin (define square (lambda-one x (* x x))) (square 12))",
          144],
 
-        ["(begin (define fact (lambda-one x (if (< x 2) x (* x (fact (- x 1)))))) (fact 12))",
+        // Factorial
+        ["(begin (define fact (lambda (x) (if (< x 2) x (* x (fact (- x 1)))))) (fact 12))",
          12*11*10*9*8*7*6*5*4*3*2*1],
+
+        // Fibonacci
+        ["(begin (define fibonacci (lambda (x) (if (<= x 1) x (+ (fibonacci (- x 1)) (fibonacci (- x 2)))))) (fibonacci 12))",
+         144],
 
         ["(begin (define abs (lambda-one x (if (> x 0) x (- x)))) (abs 123))",
          123],
@@ -132,11 +144,11 @@ var scheem_test = function() {
         ["(begin (define abs (lambda-one x (if (> x 0) x (- 0 x)))) (abs -234))",
          234],
 
-        ["(begin (define balance 100) (define nizzle (lambda-one amt (begin (set! balance (+ balance amt)) balance))) (nizzle 25) (nizzle 25))",
-         150],
-
         // (closure)
-        ["(begin (define make-account (lambda-one balance (lambda-one amt (begin (set! balance (+ balance amt)) balance)))) (define a (make-account 100)) (a -20) (a -30))",
+        ["(let ((xx 12)) (begin (let ((xx 13)) (+ xx xx)) (+ xx xx)))",
+         24],
+
+        ["(begin (define make-account (lambda (balance) (lambda (amt) (begin (set! balance (+ balance amt)) balance)))) (define acct (make-account 100)) (acct -20) (acct -30))",
          50],
 
         ["(begin (define plus (lambda (x y) (+ x y))) (plus 222 333))",
@@ -156,10 +168,6 @@ var scheem_test = function() {
 
         ["(begin (define a 10) (define test (lambda () (set! a (+ a 20)))) (test) a)",
          30],
-
-        // FAIL
-        //["((lambda () 10))",
-        // 10],
 
         //// defun
         //["(begin (defun double (x) (* 2 x)) (double 4))",

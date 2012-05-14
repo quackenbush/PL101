@@ -14,14 +14,16 @@ var evalScheem = function (expr, env) {
             return evalScheem(expr[1], env) +
                    evalScheem(expr[2], env);
         case 'lambda-one':
-            var newfunc = function(arg) {
+            var lambda_one = function(arg) {
                 var bindings = {};
                 var newenv = {bindings: bindings,
                               outer: env};
-                bindings[expr[1]] = arg;
-                return evalScheem(expr[2], newenv);
+                var varname = expr[1];
+                var body = expr[2];
+                bindings[varname] = arg;
+                return evalScheem(body, newenv);
             };
-            return newfunc;
+            return lambda_one;
         default:
             // Simple application
             var func = evalScheem(expr[0], env);

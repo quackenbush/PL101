@@ -9,41 +9,47 @@ var scheem_check_size = function(expr, min_size, max_size) {
 
 var scheem_update = function(env, symbol, value, do_define) {
     // set! function
-    if (! ('bindings' in env))
+    if (env === {})
         throw new Error('symbol ' + symbol + " unknown");
 
-    if (symbol in env.bindings || do_define)
+    if ((symbol in env.bindings) || do_define)
     {
         if (typeof symbol !== 'string')
             throw new Error("Symbol must be a string (" + symbol + ")");
 
-        env.bindings[symbol] = scheem_eval(value, env);
+        env.bindings[symbol] = value;
         return 0;
     }
 
     return scheem_update(env.outer, symbol, value, false);
 };
 
-function scheem_let_one (expr, env) {
-    scheem_check_size(expr, 4, 4);
-    var symbol = expr[1];
+function scheem_let (expr, env) {
+    scheem_check_size(expr, 3, 3);
+    var args = expr[1];
+    var body = expr[2];
     var bindings = {};
     var new_env = {outer : env,
                    bindings : bindings};
-
-    bindings[symbol] = scheem_eval(expr[2], new_env);
-    return scheem_eval(expr[3], new_env);
-};
+    var i;
+    for (i = 0; i < args.length; i++) {
+        bindings[args[i][0]] = scheem_eval(args[i][1], new_env);
+    }
+    return scheem_eval(body, new_env);
+}
 
 function scheem_lookup (env, v) {
-    if (! ('bindings' in env))
+    if (env === {})
         throw new Error("symbol " + v + " unknown");
+
+    //console.log("forward");
+    //console.log(env);
 
     if (v in env.bindings)
         return env.bindings[v];
 
     return scheem_lookup(env.outer, v);
-};
+}
 
 function scheem_defun (expr, env) {
     var function_name;
@@ -56,26 +62,32 @@ function scheem_defun (expr, env) {
 
     env.bindings[function_name] = [expr[2], expr[3]];
     return 0;
-};
+}
 
 function bind_env (env, v, val) {
     env.bindings[v] = val;
-};
+    //scheem_update(env, v, val, true);
+}
 
-function gen_lambda (env, syms, body) {
-    var newfunc = function(args) {
+function gen_lambda (env, formals, body) {
+    //for (i = 0; i < formals.length; i++) {
+    //    bind_env(env, formals[i], 0);
+    //    //console.log('' + i + ': ' + formals[i] + ' => ' + args[i]);
+    //}
+
+    var lambda = function(args) {
         var bindings = {};
-        var i = 0;
-        var newenv = {bindings: bindings,
-                      outer: env};
-        //console.log('syms: ' + syms + ', args: ' + args + ', expr: ' + body);
-        // NOTE: the hack here:  applying to the current environment, not the sub-environment
-        for (i = 0; i < syms.length; i++) {
-            bind_env(env, syms[i], scheem_eval(args[i], newenv));
+        var newenv = {'bindings': bindings,
+                      'outer': env};
+        var i;
+        for (i = 0; i < formals.length; i++) {
+            var arg = args[i];
+            bind_env(newenv, formals[i], arg);
         }
-        return scheem_eval(body, env);
+        var result = scheem_eval(body, newenv);
+        return result;
     };
-    return newfunc;
+    return lambda;
 }
 
 function scheem_eval (expr, env) {
@@ -94,18 +106,17 @@ function scheem_eval (expr, env) {
             var result;
 
             for (i = 1; i < expr.length; i++)
-            {
                 result = scheem_eval(expr[i], env);
-            }
+
             return result;
 
         case 'define':
             scheem_check_size(expr, 3, 3);
-            return scheem_update(env, expr[1], expr[2], true);
+            return scheem_update(env, expr[1], scheem_eval(expr[2], env), true);
 
         case 'set!':
             scheem_check_size(expr, 3, 3);
-            return scheem_update(env, expr[1], expr[2], false);
+            return scheem_update(env, expr[1], scheem_eval(expr[2], env), false);
 
         case 'if':
             scheem_check_size(expr, 4, 4);
@@ -119,8 +130,8 @@ function scheem_eval (expr, env) {
             scheem_check_size(expr, 2, 2);
             return expr[1];
 
-        case 'let-one':
-            return scheem_let_one(expr, env);
+        case 'let':
+            return scheem_let(expr, env);
 
         case 'lambda-one':
             var sym = expr[1];
@@ -136,9 +147,8 @@ function scheem_eval (expr, env) {
             return scheem_defun(expr, env);
 
         default:
-            // Lambda evaluation
-            // HACK: this is probably a let() or apply() func
-            var func = scheem_lookup(env, expr[0]);
+            // Function evaluation
+            var func = scheem_eval(expr[0], env); // eval(), so we can have a dynamic func name
             var args = expr.slice(1);
             var a = [];
             var i;
@@ -151,15 +161,20 @@ function scheem_eval (expr, env) {
 };
 
 function scheem_eval_global (expr, env) {
+    function scheem_bool(x) { return x ? SCHEEM_T : SCHEEM_F; };
+
     DEFAULT_BINDINGS = {
-        '+': function(x) { return x[0] + x[1]; },
-        '-': function(x) { return x[0] - x[1]; },
-        '*': function(x) { return x[0] * x[1]; },
-        '/': function(x) { return x[0] / x[1]; },
-        '=': function(x) { return x[0] == x[1] ? SCHEEM_T : SCHEEM_F; },
-        '!': function(x) { return (x[0] == 0 || x[0] == SCHEEM_F) ? SCHEEM_T : SCHEEM_F; },
-        '<': function(x) { return x[0] <  x[1] ? SCHEEM_T : SCHEEM_F; },
-        '>': function(x) { return x[0] >  x[1] ? SCHEEM_T : SCHEEM_F; },
+        '+':  function(x) { return x[0] + x[1]; },
+        '-':  function(x) { return x[0] - x[1]; },
+        '*':  function(x) { return x[0] * x[1]; },
+        '/':  function(x) { return x[0] / x[1]; },
+        '!':  function(x) { return scheem_bool( x[0] == 0 || x[0] == SCHEEM_F ); },
+
+        '=':  function(x) { return scheem_bool( x[0] == x[1] ); },
+        '<':  function(x) { return scheem_bool( x[0] <  x[1] ); },
+        '<=': function(x) { return scheem_bool( x[0] <= x[1] ); },
+        '>':  function(x) { return scheem_bool( x[0] >  x[1] ); },
+        '>=': function(x) { return scheem_bool( x[0] >= x[1] ); },
 
         'car':   function(x) { return x[0][0]; },
         'cdr':   function(x) { return x[0].slice(1); },
