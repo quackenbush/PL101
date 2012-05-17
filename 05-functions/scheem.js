@@ -169,6 +169,9 @@ var scheem_test = function() {
         ["(begin (define a 10) (define test (lambda () (set! a (+ a 20)))) (test) a)",
          30],
 
+        ["(begin (define a 10) (define test (lambda () (set! a (+ a 20)))) (test) (print 'hello) (print '(hello world)) a)",
+         30],
+
         //// defun
         //["(begin (defun double (x) (* 2 x)) (double 4))",
         // 8],

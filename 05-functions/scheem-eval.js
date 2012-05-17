@@ -23,18 +23,22 @@ function scheem_update (env, symbol, value, do_define) {
     return scheem_update(env.outer, symbol, value, false);
 }
 
+function new_env (env, bindings) {
+    return { bindings : bindings,
+             outer : env };
+}
+
 function scheem_let (expr, env) {
     scheem_check_size(expr, 3, 3);
     var args = expr[1];
     var body = expr[2];
     var bindings = {};
-    var new_env = {outer : env,
-                   bindings : bindings};
+    var newenv = new_env(env, bindings);
     var i;
     for (i = 0; i < args.length; i++) {
-        bindings[args[i][0]] = scheem_eval(args[i][1], new_env);
+        bindings[args[i][0]] = scheem_eval(args[i][1], newenv);
     }
-    return scheem_eval(body, new_env);
+    return scheem_eval(body, newenv);
 }
 
 function scheem_lookup (env, symbol) {
@@ -66,9 +70,7 @@ function bind_env (env, v, val) {
 
 function gen_lambda (env, formals, body) {
     var lambda = function(args) {
-        var bindings = {};
-        var newenv = {'bindings': bindings,
-                      'outer': env};
+        var newenv = new_env(env, {});
         var i;
         for (i = 0; i < formals.length; i++) {
             var arg = args[i];
@@ -150,7 +152,7 @@ function scheem_eval (expr, env) {
     }
 }
 
-function scheem_eval_global (expr, env) {
+function scheem_eval_global (expr, bindings) {
     function scheem_bool(x) { return x ? SCHEEM_T : SCHEEM_F; };
 
     BUILTIN_BINDINGS = {
@@ -169,13 +171,11 @@ function scheem_eval_global (expr, env) {
         'car':   function(x) { return x[0][0]; },
         'cdr':   function(x) { return x[0].slice(1); },
         'cons':  function(x) { return [x[0]].concat(x[1]); },
-        'print': function(x) { console.log(expr[1]); },
+        'print': function(x) { console.log(x[0]); return 0; },
     };
 
-    default_env = {bindings: BUILTIN_BINDINGS,
-                   outer: {}};
-    e = {bindings: env,
-         outer: default_env};
+    var default_env = new_env({}, BUILTIN_BINDINGS);
+    var e = new_env(default_env, bindings);
     return scheem_eval(expr, e);
 }
 
