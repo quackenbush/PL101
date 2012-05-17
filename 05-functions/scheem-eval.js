@@ -8,7 +8,6 @@ var scheem_check_size = function(expr, min_size, max_size) {
 };
 
 var scheem_update = function(env, symbol, value, do_define) {
-    // set! function
     if (env === {})
         throw new Error('symbol ' + symbol + " unknown");
 
@@ -38,14 +37,14 @@ function scheem_let (expr, env) {
     return scheem_eval(body, new_env);
 }
 
-function scheem_lookup (env, v) {
+function scheem_lookup (env, symbol) {
     if (env === {})
-        throw new Error("symbol " + v + " unknown");
+        throw new Error("symbol " + symbol + " unknown");
 
-    if (v in env.bindings)
-        return env.bindings[v];
+    if (symbol in env.bindings)
+        return env.bindings[symbol];
 
-    return scheem_lookup(env.outer, v);
+    return scheem_lookup(env.outer, symbol);
 }
 
 function scheem_defun (expr, env) {
@@ -63,7 +62,6 @@ function scheem_defun (expr, env) {
 
 function bind_env (env, v, val) {
     env.bindings[v] = val;
-    //scheem_update(env, v, val, true);
 }
 
 function gen_lambda (env, formals, body) {
