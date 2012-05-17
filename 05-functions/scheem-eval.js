@@ -42,9 +42,6 @@ function scheem_lookup (env, v) {
     if (env === {})
         throw new Error("symbol " + v + " unknown");
 
-    //console.log("forward");
-    //console.log(env);
-
     if (v in env.bindings)
         return env.bindings[v];
 
@@ -70,11 +67,6 @@ function bind_env (env, v, val) {
 }
 
 function gen_lambda (env, formals, body) {
-    //for (i = 0; i < formals.length; i++) {
-    //    bind_env(env, formals[i], 0);
-    //    //console.log('' + i + ': ' + formals[i] + ' => ' + args[i]);
-    //}
-
     var lambda = function(args) {
         var bindings = {};
         var newenv = {'bindings': bindings,
@@ -163,7 +155,7 @@ function scheem_eval (expr, env) {
 function scheem_eval_global (expr, env) {
     function scheem_bool(x) { return x ? SCHEEM_T : SCHEEM_F; };
 
-    DEFAULT_BINDINGS = {
+    BUILTIN_BINDINGS = {
         '+':  function(x) { return x[0] + x[1]; },
         '-':  function(x) { return x[0] - x[1]; },
         '*':  function(x) { return x[0] * x[1]; },
@@ -182,7 +174,7 @@ function scheem_eval_global (expr, env) {
         'print': function(x) { console.log(expr[1]); },
     };
 
-    default_env = {bindings: DEFAULT_BINDINGS,
+    default_env = {bindings: BUILTIN_BINDINGS,
                    outer: {}};
     e = {bindings: env,
          outer: default_env};
