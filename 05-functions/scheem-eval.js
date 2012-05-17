@@ -1,13 +1,13 @@
 var SCHEEM_T = '#t';
 var SCHEEM_F = '#f';
 
-var scheem_check_size = function(expr, min_size, max_size) {
+function scheem_check_size (expr, min_size, max_size) {
     if ((expr.length < min_size) ||
         (expr.length > max_size))
         throw new Error("Invalid number of args (" + expr.length + ") for " + expr[0] + ": " + expr.slice(1));
-};
+}
 
-var scheem_update = function(env, symbol, value, do_define) {
+function scheem_update (env, symbol, value, do_define) {
     if (env === {})
         throw new Error('symbol ' + symbol + " unknown");
 
@@ -21,7 +21,7 @@ var scheem_update = function(env, symbol, value, do_define) {
     }
 
     return scheem_update(env.outer, symbol, value, false);
-};
+}
 
 function scheem_let (expr, env) {
     scheem_check_size(expr, 3, 3);
@@ -148,7 +148,7 @@ function scheem_eval (expr, env) {
             }
             return func(a);
     }
-};
+}
 
 function scheem_eval_global (expr, env) {
     function scheem_bool(x) { return x ? SCHEEM_T : SCHEEM_F; };
@@ -177,6 +177,6 @@ function scheem_eval_global (expr, env) {
     e = {bindings: env,
          outer: default_env};
     return scheem_eval(expr, e);
-};
+}
 
 exports.eval = scheem_eval_global;
