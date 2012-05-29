@@ -2,17 +2,17 @@
 // Using PEG.js: http://pegjs.majda.cz/
 
 start =
-    expression
+    whitespace* expr:expression { return expr; }
 
 validchar =
     [0-9a-zA-Z_?!<>+\-=@#$%^&*/.]
 
 comment =
-    ";;" [^\n]*
+    ";" [^\n]*
 
 whitespace =
-    [ \n\t]
-  / comment
+    [ \n\t]+
+  / comment whitespace?
 
 variable =
     chars:validchar+

@@ -42,8 +42,8 @@ function scheem_let (expr, env) {
 }
 
 function scheem_lookup (env, symbol) {
-    if (env === {})
-        throw new Error("symbol " + symbol + " unknown");
+    if (env === {} || ! ('bindings' in env))
+        throw new Error("symbol '" + symbol + "' unknown");
 
     if (symbol in env.bindings)
         return env.bindings[symbol];
@@ -168,10 +168,11 @@ function scheem_eval_global (expr, bindings) {
         '>':  function(x) { return scheem_bool( x[0] >  x[1] ); },
         '>=': function(x) { return scheem_bool( x[0] >= x[1] ); },
 
-        'car':   function(x) { return x[0][0]; },
-        'cdr':   function(x) { return x[0].slice(1); },
-        'cons':  function(x) { return [x[0]].concat(x[1]); },
-        'print': function(x) { console.log(x[0]); return 0; },
+        'empty?': function(x) { return (x[0].length == 0) ? SCHEEM_T : SCHEEM_F; },
+        'car':    function(x) { return x[0][0]; },
+        'cdr':    function(x) { return x[0].slice(1); },
+        'cons':   function(x) { return [x[0]].concat(x[1]); },
+        'print':  function(x) { console.log(x[0]); return 0; },
     };
 
     var default_env = new_env({}, BUILTIN_BINDINGS);
@@ -179,4 +180,8 @@ function scheem_eval_global (expr, bindings) {
     return scheem_eval(expr, e);
 }
 
-exports.eval = scheem_eval_global;
+// If we are used as Node module, export evalScheem
+if (typeof module !== 'undefined') {
+    module.exports.eval = scheem_eval_global;
+//exports.eval = scheem_eval_global;
+}
