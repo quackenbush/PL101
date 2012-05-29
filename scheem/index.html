@@ -1,0 +1,52 @@
+
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Scheem Demo</title>
+
+  <link href="http://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+  <script src="js/jquery-1.7.1.min.js"></script>
+
+
+  <script src="codemirror/lib/codemirror.js"></script>
+  <script src="codemirror/mode/scheme/scheme.js"></script>
+  <script src="codemirror/mode/diff/diff.js"></script>
+  <script src="codemirror/mode/javascript/javascript.js"></script>
+  <link rel="stylesheet" href="codemirror/lib/codemirror.css">
+  <link rel="stylesheet" href="codemirror/theme/ambiance.css">
+  <link rel="stylesheet" href="codemirror/mode/diff/diff.css">
+
+  <link rel="stylesheet" href="css/style.css">
+  <script src="generated_scheem_peg.js"></script>
+
+  <script src="scheem-eval.js"></script>
+  <!--<script src="js/lib/interpreter.js"></script>-->
+
+</head>
+<body>
+
+
+  <div id="container">
+    <h1>Scheem Editor</h1>
+    <div id="edit-pane" class="pane">
+      <input id="run" type="button" value="Run">
+      <input id="clear-output" type="button" value="Clear Output">
+      <input id="clear-environment" type="button" value="Clear Environment">
+      <span class="example-presets">
+        <input id="ex-1" type="button" value="Example 1">
+        <input id="ex-2" type="button" value="Example 2">
+        <input id="ex-3" type="button" value="Example 3">
+      </span>
+      <div id="editor"></div>
+    </div>
+    <div id="results-pane" class="pane">
+      <h2>Output</h2>
+      <div id="console"></div>
+      <h2>Environment</h2>
+      <div id="environment"></div>
+    </div>
+  </div>
+<script src="js/main.js"></script>
+
+</body>
+</html>

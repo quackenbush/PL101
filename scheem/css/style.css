@@ -1,0 +1,43 @@
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  background: #bbb;
+}
+
+#container {
+  height: 80%;
+  margin-left: 0.5em;
+}
+
+.pane {
+  display: block;
+  float: left;
+  width:45%;
+  margin-right: 2em;
+}
+
+#edit-pane .CodeMirror-scroll {
+  height: 100%;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+#console .CodeMirror-scroll {
+  height: 40%;
+  background: white;
+}
+
+#console {
+  margin-bottom: 2em;
+}
+
+#environment .CodeMirror-scroll {
+  height: 40%;
+  background: white;
+}
+
+.example-presets {
+  float: right;
+}
